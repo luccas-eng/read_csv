@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/read_csv/internal/model"
-
 	_ "github.com/lib/pq" //psql
 )
 
 //Repository ...
 type Repository interface {
 	Close()
+	InsertValues(data []string) error
 }
 
 type databaseRepo struct {
@@ -27,9 +26,6 @@ func NewRepository(url string) (Repository, error) {
 	if err != nil {
 		return nil, fmt.Errorf("sql.Open(): %w", err)
 	}
-
-	db.SetMaxOpenConns(100)
-	db.SetMaxIdleConns(100)
 	db.SetConnMaxLifetime(10 * time.Second)
 
 	err = db.Ping()
@@ -45,9 +41,9 @@ func (m *databaseRepo) Close() {
 	m.db.Close()
 }
 
-func (m *databaseRepo) InsertValues(data model.Data) error {
+func (m *databaseRepo) InsertValues(data []string) error {
 
-	query := `insert into dataset_db.public.txtdata (
+	query := `insert into dataset_db.public.original_data (
 				cpf,
 				private,
 				incomplete,
@@ -63,7 +59,7 @@ func (m *databaseRepo) InsertValues(data model.Data) error {
 		return fmt.Errorf("m.db.Begin(): %w", err)
 	}
 
-	r, err := tx.Exec(query, data.Cpf, data.Private, data.Incomplete, data.LastPurchase, data.AvgTicket, data.LastPurchase, data.FrequentStore, data.LastStore)
+	r, err := tx.Exec(query, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7])
 	if err != nil {
 		return fmt.Errorf("tx.Exec(): %w", err)
 	}
@@ -74,6 +70,8 @@ func (m *databaseRepo) InsertValues(data model.Data) error {
 		}
 		return fmt.Errorf("r.RowsAffected(): %d", rows)
 	}
+
+	tx.Commit()
 
 	return nil
 }

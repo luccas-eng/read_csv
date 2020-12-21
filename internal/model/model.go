@@ -6,8 +6,8 @@ type Data struct {
 	Private       string
 	Incomplete    string
 	LastPurchase  string
-	AvgTicket     float64
-	LastTicket    float64
+	AvgTicket     string
+	LastTicket    string
 	FrequentStore string
 	LastStore     string
 }

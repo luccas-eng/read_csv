@@ -25,3 +25,13 @@ func LoadConfig() {
 		log.Fatal(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 }
+
+func LoadTestConfig() {
+	C.SetConfigType("toml")
+	C.AddConfigPath(".")         // optionally look for config in the working directory
+	C.SetConfigName("../config") // name of config file (without extension)
+
+	if err := C.ReadInConfig(); err != nil {
+		log.Fatal(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+}

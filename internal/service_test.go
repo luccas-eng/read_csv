@@ -16,7 +16,8 @@ type Config struct {
 
 func TestReadData(t *testing.T) {
 
-	config.LoadConfig()
+	start := time.Now()
+	config.LoadTestConfig()
 
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.C.GetString("db.host"), config.C.GetInt64("db.port"), config.C.GetString("db.user"), config.C.GetString("db.pwd"), config.C.GetString("db.dbname"))
 
@@ -32,9 +33,14 @@ func TestReadData(t *testing.T) {
 
 	service := NewService(repository)
 
-	err := service.ReadData()
+	data, err := service.ReadData()
 	if err != nil {
 		log.Println(fmt.Errorf("service.ReadData(): %w", err))
 	}
+
+	elapsed := time.Since(start)
+	log.Printf("Elapsed time: %f", elapsed.Seconds())
+
+	t.Log(data)
 
 }
