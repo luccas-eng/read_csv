@@ -3,15 +3,23 @@ package internal
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/spf13/cast"
+
 	_ "github.com/lib/pq" //psql
+	"github.com/read_csv/internal/model"
+	"github.com/read_csv/internal/util"
 )
 
 //Repository ...
 type Repository interface {
 	Close()
 	InsertValues(data []string) error
+	InsertSanitizedData(data []interface{}) error
+	GetTotalLines() (totalLines int, err error)
+	GetData(limit, offset int) (data []*model.Data, err error)
 }
 
 type databaseRepo struct {
@@ -74,4 +82,116 @@ func (m *databaseRepo) InsertValues(data []string) error {
 	tx.Commit()
 
 	return nil
+}
+
+func (m *databaseRepo) InsertSanitizedData(data []interface{}) error {
+
+	query := `insert into dataset_db.public.copy_data (
+				cpf,
+				private,
+				incomplete,
+				last_purchase,
+				avg_ticket,
+				last_ticket,
+				frequent_store,
+				last_store
+			 ) values ($1, $2, $3, $4, $5, $6, $7, $8);`
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return fmt.Errorf("m.db.Begin(): %w", err)
+	}
+
+	var (
+		cpf, lastPurchase, frequentStore, lastStore util.NullString
+		avgTicket, lastTicket                       util.NullFloat64
+	)
+
+	a, er := cast.ToStringE(data[0])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[0])")
+	}
+	b, er := cast.ToStringE(data[1])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[1])")
+	}
+	c, er := cast.ToStringE(data[2])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[2])")
+	}
+	d, er := cast.ToStringE(data[3])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[3])")
+	}
+	e, er := cast.ToFloat64E(data[4])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[4])")
+	}
+	f, er := cast.ToFloat64E(data[5])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[5])")
+	}
+	g, er := cast.ToStringE(data[6])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[6])")
+	}
+	h, er := cast.ToStringE(data[7])
+	if er != nil {
+		return fmt.Errorf("cast.ToStringE(data[7])")
+	}
+
+	r, err := tx.Exec(query, cpf.NewString(a), b, c, lastPurchase.NewString(d), avgTicket.NewFloat64(e), lastTicket.NewFloat64(f), frequentStore.NewString(g), lastStore.NewString(h))
+	if err != nil {
+		return fmt.Errorf("tx.Exec(): %w", err)
+	}
+
+	if rows, err := r.RowsAffected(); rows == 0 {
+		if err != nil {
+			return fmt.Errorf("r.RowsAffected(): %w", err)
+		}
+		return fmt.Errorf("r.RowsAffected(): %d", rows)
+	}
+
+	tx.Commit()
+	log.Println("data processed")
+	return nil
+}
+
+func (m *databaseRepo) GetTotalLines() (totalLines int, err error) {
+	query := `select count(*) from dataset_db.public.original_data;`
+	row := m.db.QueryRow(query)
+	if err := row.Scan(&totalLines); err != nil {
+		return 0, fmt.Errorf("row.Scan(): %w", err)
+	}
+	return
+}
+
+func (m *databaseRepo) GetData(limit, offset int) (data []*model.Data, err error) {
+	query := `select cpf, private, incomplete, last_purchase, avg_ticket, last_ticket, frequent_store, last_store from dataset_db.public.original_data limit $1 offset $2;`
+
+	rows, e := m.db.Query(query, limit, offset)
+	if e != nil {
+		err = fmt.Errorf("m.db.Query(): %w", e)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		dd := &model.Data{}
+
+		e := rows.Scan(&dd.Cpf, &dd.Private, &dd.Incomplete, &dd.LastPurchase, &dd.AvgTicket, &dd.LastTicket, &dd.FrequentStore, &dd.LastStore)
+
+		if e != nil {
+			if e == sql.ErrNoRows {
+				err = nil
+				return
+			}
+			err = fmt.Errorf("rows.Scan(): %w", e)
+			return
+		}
+
+		data = append(data, dd)
+	}
+
+	return
 }
