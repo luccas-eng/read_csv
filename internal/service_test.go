@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"testing"
@@ -14,7 +15,7 @@ type Config struct {
 	DatabaseURL string `envconfig:"DATABASE_URL"`
 }
 
-func TestReadData(t *testing.T) {
+func TestProcessData(t *testing.T) {
 
 	start := time.Now()
 	config.LoadTestConfig()
@@ -33,13 +34,13 @@ func TestReadData(t *testing.T) {
 
 	service := NewService(repository)
 
-	data, err := service.ReadData()
+	data, total, err := service.ProcessData(context.Background())
 	if err != nil {
 		log.Println(fmt.Errorf("service.ReadData(): %w", err))
 	}
 
 	elapsed := time.Since(start)
-	log.Printf("Elapsed time: %f", elapsed.Seconds())
+	log.Printf("%d lines processed in %.2f seconds", total, elapsed.Seconds())
 
 	t.Log(data)
 

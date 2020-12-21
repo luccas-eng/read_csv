@@ -3,15 +3,18 @@ package internal
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
+
+	"github.com/read_csv/internal/model"
 )
 
 //Service interface implement services running between clients
 type Service interface {
-	ReadData() ([]string, error)
+	ProcessData(c context.Context) (values []*model.MapData, total int, err error)
 }
 
 //InternalService struct implements repo
@@ -25,15 +28,16 @@ func NewService(r Repository) Service {
 }
 
 //ReadData ...
-func (s *InternalService) ReadData() (values []string, err error) {
+func (s *InternalService) ProcessData(c context.Context) (values []*model.MapData, total int, err error) {
 
 	file, err := os.Open("../external/base_teste.txt")
 	if err != nil {
-		return nil, fmt.Errorf("os.Open(): %w", err)
+		return nil, 0, fmt.Errorf("os.Open(): %w", err)
 	}
 
 	defer file.Close()
 
+	var counter int
 	// Start reading from the file with a reader.
 	reader := bufio.NewReader(file)
 	for {
@@ -57,13 +61,14 @@ func (s *InternalService) ReadData() (values []string, err error) {
 			// If we're at the EOF, break.
 			if err != nil {
 				if err != io.EOF {
-					return nil, fmt.Errorf("%w", err)
+					return nil, 0, fmt.Errorf("%w", err)
 				}
 				break
 			}
 		}
 
 		if err == io.EOF {
+			err = nil
 			break
 		}
 
@@ -74,16 +79,26 @@ func (s *InternalService) ReadData() (values []string, err error) {
 
 		r := regexp.MustCompile("[^\\s]+")
 
-		values = r.FindAllString(buffer.String(), -1)
-		err = s.repository.InsertValues(values)
+		v := r.FindAllString(buffer.String(), -1)
+
+		err = s.repository.InsertValues(v)
 		if err != nil {
-			return nil, fmt.Errorf("s.repository.InsertValues(): %w", err)
+			return nil, 0, fmt.Errorf("s.repository.InsertValues(): %w", err)
 		}
+
+		data := &model.MapData{Key: counter, Value: v}
+
+		values = append(values, data)
+
+		counter++
+
 	}
 
-	if err != io.EOF {
-		return nil, fmt.Errorf(" > Failed with error: %w", err)
+	if err != nil && err != io.EOF {
+		return nil, 0, fmt.Errorf("process failed with error: %w", err)
 	}
 
-	return values, nil
+	total = counter
+
+	return
 }

@@ -11,3 +11,9 @@ type Data struct {
 	FrequentStore string
 	LastStore     string
 }
+
+//MapData ...
+type MapData struct {
+	Key   int
+	Value []string
+}
