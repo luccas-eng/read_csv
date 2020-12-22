@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"testing"
@@ -34,15 +33,13 @@ func TestProcessData(t *testing.T) {
 
 	service := NewService(repository)
 
-	data, total, err := service.ProcessData(context.Background())
+	total, err := service.ProcessData()
 	if err != nil {
 		log.Println(fmt.Errorf("service.ReadData(): %w", err))
 	}
 
 	elapsed := time.Since(start)
 	log.Printf("%d lines processed in %.2f seconds", total, elapsed.Seconds())
-
-	t.Log(data)
 
 }
 
@@ -65,7 +62,7 @@ func TestSanitizeData(t *testing.T) {
 
 	service := NewService(repository)
 
-	ok, err := service.SanitizeData(context.Background())
+	ok, err := service.SanitizeData()
 	if err != nil {
 		log.Println(fmt.Errorf("service.ReadData(): %w", err))
 	}

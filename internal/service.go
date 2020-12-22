@@ -21,8 +21,9 @@ import (
 
 //Service interface implement services running between clients
 type Service interface {
-	ProcessData(c context.Context) (values []*model.MapData, total int, err error)
-	SanitizeData(c context.Context) (ok bool, err error)
+	ProcessData() (total int, err error)
+	SanitizeData() (ok bool, err error)
+	CountSanitizedData() (totalLines int, err error)
 }
 
 //InternalService struct implements repo
@@ -36,11 +37,11 @@ func NewService(r Repository) Service {
 }
 
 //ProcessData ...
-func (s *InternalService) ProcessData(c context.Context) (values []*model.MapData, total int, err error) {
+func (s *InternalService) ProcessData() (total int, err error) {
 
-	file, err := os.Open("../external/base_teste.txt")
+	file, err := os.Open("./external/base_teste.txt")
 	if err != nil {
-		return nil, 0, fmt.Errorf("os.Open(): %w", err)
+		return 0, fmt.Errorf("os.Open(): %w", err)
 	}
 
 	defer file.Close()
@@ -69,7 +70,7 @@ func (s *InternalService) ProcessData(c context.Context) (values []*model.MapDat
 			// If we're at the EOF, break.
 			if err != nil {
 				if err != io.EOF {
-					return nil, 0, fmt.Errorf("%w", err)
+					return 0, fmt.Errorf("%w", err)
 				}
 				break
 			}
@@ -91,19 +92,15 @@ func (s *InternalService) ProcessData(c context.Context) (values []*model.MapDat
 
 		err = s.repository.InsertValues(v)
 		if err != nil {
-			return nil, 0, fmt.Errorf("s.repository.InsertValues(): %w", err)
+			return 0, fmt.Errorf("s.repository.InsertValues(): %w", err)
 		}
-
-		data := &model.MapData{Key: counter, Value: v}
-
-		values = append(values, data)
 
 		counter++
 
 	}
 
 	if err != nil && err != io.EOF {
-		return nil, 0, fmt.Errorf("process failed with error: %w", err)
+		return 0, fmt.Errorf("process failed with error: %w", err)
 	}
 
 	total = counter
@@ -112,7 +109,7 @@ func (s *InternalService) ProcessData(c context.Context) (values []*model.MapDat
 }
 
 //SanitizeData ...
-func (s *InternalService) SanitizeData(c context.Context) (ok bool, err error) {
+func (s *InternalService) SanitizeData() (ok bool, err error) {
 
 	var (
 		pages         int
@@ -285,4 +282,9 @@ func (s *InternalService) SanitizeData(c context.Context) (ok bool, err error) {
 	err = nil
 
 	return
+}
+
+//CountSanitizedData used to check reliability
+func (s *InternalService) CountSanitizedData() (totalLines int, err error) {
+	return s.repository.CountSanitizedData()
 }

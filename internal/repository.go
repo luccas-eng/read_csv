@@ -3,7 +3,6 @@ package internal
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/spf13/cast"
@@ -20,6 +19,7 @@ type Repository interface {
 	InsertSanitizedData(data []interface{}) error
 	GetTotalLines() (totalLines int, err error)
 	GetData(limit, offset int) (data []*model.Data, err error)
+	CountSanitizedData() (totalLines int, err error)
 }
 
 type databaseRepo struct {
@@ -80,7 +80,7 @@ func (m *databaseRepo) InsertValues(data []string) error {
 	}
 
 	tx.Commit()
-
+	// log.Println("data processed")
 	return nil
 }
 
@@ -153,12 +153,21 @@ func (m *databaseRepo) InsertSanitizedData(data []interface{}) error {
 	}
 
 	tx.Commit()
-	log.Println("data processed")
+	// log.Println("data processed")
 	return nil
 }
 
 func (m *databaseRepo) GetTotalLines() (totalLines int, err error) {
 	query := `select count(*) from dataset_db.public.original_data;`
+	row := m.db.QueryRow(query)
+	if err := row.Scan(&totalLines); err != nil {
+		return 0, fmt.Errorf("row.Scan(): %w", err)
+	}
+	return
+}
+
+func (m *databaseRepo) CountSanitizedData() (totalLines int, err error) {
+	query := `select count(*) from dataset_db.public.copy_data;`
 	row := m.db.QueryRow(query)
 	if err := row.Scan(&totalLines); err != nil {
 		return 0, fmt.Errorf("row.Scan(): %w", err)
