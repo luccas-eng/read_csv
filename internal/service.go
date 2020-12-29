@@ -28,9 +28,6 @@ func NewService(r Repository) Service {
 	return &InternalService{r}
 }
 
-const mb = 1024 * 1024
-const gb = 1024 * mb
-
 //ProcessData ...
 func (s *InternalService) ProcessData(filePath string) (total int, err error) {
 
@@ -148,10 +145,14 @@ func sanitizeData(values [][]byte) (data []interface{}, err error) {
 
 	if invalidCPF {
 		data = append(data, true)
+	} else {
+		data = append(data, false)
 	}
 
 	if invalidCNPJ {
 		data = append(data, true)
+	} else {
+		data = append(data, false)
 	}
 
 	if err != nil {

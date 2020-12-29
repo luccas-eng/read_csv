@@ -142,18 +142,8 @@ func (m *databaseRepo) InsertSanitizedData(data []interface{}) error {
 		return fmt.Errorf("cast.ToStringE(data[7])")
 	}
 
-	var i, j bool
-	if len(data) > 8 {
-		if data[8] != nil {
-			i = true
-		}
-	}
-
-	if len(data) > 9 {
-		if data[9] != nil {
-			j = true
-		}
-	}
+	i := cast.ToBool(data[8])
+	j := cast.ToBool(data[9])
 
 	r, err := tx.Exec(query, cpf.NewString(a), b, c, lastPurchase.NewString(d), avgTicket.NewFloat64(e), lastTicket.NewFloat64(f), frequentStore.NewString(g), lastStore.NewString(h), i, j)
 	if err != nil {
