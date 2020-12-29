@@ -1,6 +1,6 @@
 # Test - read_csv
 
-Esse projeto compreende um serviço Go que recebe um arquivo, lê e em seguida armazena em banco de dados e o sanitiza.
+Esse projeto compreende um serviço Go que recebe um arquivo, lê e em seguida armazena em banco de dados com o dado sanitizado.
 
 ## Pré requisitos:
 
