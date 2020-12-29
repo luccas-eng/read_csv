@@ -94,8 +94,10 @@ func (m *databaseRepo) InsertSanitizedData(data []interface{}) error {
 				avg_ticket,
 				last_ticket,
 				frequent_store,
-				last_store
-			 ) values ($1, $2, $3, $4, $5, $6, $7, $8);`
+				last_store,
+				cpf_invalid,
+				cnpj_invalid
+			 ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`
 
 	tx, err := m.db.Begin()
 	if err != nil {
@@ -140,7 +142,20 @@ func (m *databaseRepo) InsertSanitizedData(data []interface{}) error {
 		return fmt.Errorf("cast.ToStringE(data[7])")
 	}
 
-	r, err := tx.Exec(query, cpf.NewString(a), b, c, lastPurchase.NewString(d), avgTicket.NewFloat64(e), lastTicket.NewFloat64(f), frequentStore.NewString(g), lastStore.NewString(h))
+	var i, j bool
+	if len(data) > 8 {
+		if data[8] != nil {
+			i = true
+		}
+	}
+
+	if len(data) > 9 {
+		if data[9] != nil {
+			j = true
+		}
+	}
+
+	r, err := tx.Exec(query, cpf.NewString(a), b, c, lastPurchase.NewString(d), avgTicket.NewFloat64(e), lastTicket.NewFloat64(f), frequentStore.NewString(g), lastStore.NewString(h), i, j)
 	if err != nil {
 		return fmt.Errorf("tx.Exec(): %w", err)
 	}

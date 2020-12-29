@@ -10,6 +10,7 @@ type Data struct {
 	LastTicket    string
 	FrequentStore string
 	LastStore     string
+	Invalid       string
 }
 
 //MapData ...

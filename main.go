@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -12,6 +13,10 @@ import (
 )
 
 func main() {
+
+	args := os.Args[1:]
+	fmt.Println(args)
+	fileName := args[0]
 
 	//load config with viper pkg
 	config.LoadConfig()
@@ -35,33 +40,22 @@ func main() {
 
 	start := time.Now()
 	log.Printf("started data processing at %s", start.Format("2006-01-02 03:04:05"))
-	total, err := s.ProcessData()
+	_, err := s.ProcessData(fileName)
 	if err != nil {
 		log.Println("s.ProcessData(): %w", err)
 		panic(err)
 	}
 	elapsed1 := time.Since(start)
 
-	start = time.Now()
-	log.Printf("started data sanitizing at %s", start.Format("2006-01-02 03:04:05"))
-	ok, err := s.SanitizeData()
-	if err != nil {
-		log.Println("s.SanitizeData(): %w", err)
-		panic(err)
-	}
-	elapsed2 := time.Since(start)
+	// sanitized, err := s.CountSanitizedData()
+	// if err != nil {
+	// 	log.Println("s.CountSanitizedData(): %w", err)
+	// 	panic(err)
+	// }
 
-	sanitized, err := s.CountSanitizedData()
-	if err != nil {
-		log.Println("s.CountSanitizedData(): %w", err)
-		panic(err)
-	}
+	// reliability := (float64(sanitized) / float64(total)) * float64(100)
 
-	reliability := (float64(sanitized) / float64(total)) * float64(100)
-
-	log.Printf("took %.2f seconds to process data with %d lines processed", elapsed1.Seconds(), total)
-	log.Printf("took %.2f seconds to sanitize data - %v return", elapsed2.Seconds(), ok)
-	log.Printf("reliability tax %.2f of sanitized ones", reliability)
+	log.Printf("took %.2f seconds to process data", elapsed1.Seconds())
 	log.Println("process done, bye")
 
 }
