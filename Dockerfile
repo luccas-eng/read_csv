@@ -1,26 +1,36 @@
-FROM golang:1.12-alpine AS build_base
+FROM golang:alpine AS builder
 
-RUN apk add --no-cache git
+# Set necessary environmet variables needed for our image
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
 
-# Set the Current Working Directory inside the container
-WORKDIR /tmp/read_csv
+# Move to working directory /build
+WORKDIR /build
 
-# We want to populate the module cache based on the go.{mod,sum} files.
+# Copy and download dependency using go mod
 COPY go.mod .
 COPY go.sum .
-
 RUN go mod download
 
+# Copy the code into the container
 COPY . .
 
-# Build the Go app
-RUN go build -o ./out/read_csv .
+# Build the application
+RUN go build -o main .
 
-# Start fresh from a smaller image
-FROM alpine:3.9 
-RUN apk add ca-certificates
+# Move to /dist directory as the place for resulting binary folder
+WORKDIR /dist
 
-COPY --from=build_base /tmp/read_csv/out/read_csv /app/read_csv
+# Copy binary from build to main folder
+RUN cp /build/main .
 
-# Run the binary program produced by `go install`
-CMD ["/app/read_csv", "/app/read_csv/external/base_teste.txt"]
+# Build a small image
+FROM scratch
+
+COPY --from=builder /dist/main /
+COPY config.toml /config.toml
+
+# Command to run
+CMD ["/main", "/main/external/base_teste.txt"]
