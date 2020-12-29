@@ -1,6 +1,6 @@
 [db]
-host = "localhost"
-port = 5433
+host = "postgres"
+port = 5432
 user = "luccasman"
 pwd = "adm1n0nlY"
 dbname = "dataset_db"

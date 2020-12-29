@@ -32,7 +32,7 @@ func NewRepository(url string) (Repository, error) {
 	// open db conn
 	db, err := sql.Open("postgres", url)
 	if err != nil {
-		return nil, fmt.Errorf("sql.Open(): %w", err)
+		return nil, fmt.Errorf("sql.Open(): %w, conn: %s", err, url)
 	}
 	db.SetConnMaxLifetime(10 * time.Second)
 

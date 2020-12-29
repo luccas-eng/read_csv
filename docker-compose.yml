@@ -2,21 +2,43 @@ version: '3.1'
 
 services:
 
-  db:
+  postgres:
     image: "postgres" # use latest official postgres version
     restart: always
-    container_name: neoway_sv
+    container_name: postgres
     environment: 
       POSTGRES_USER: luccasman
       POSTGRES_PASSWORD: adm1n0nlY
       POSTGRES_DB: dataset_db
     ports:
-      - 5433:5432
+      - 5432:5432
     volumes:
       - ./migrations/sqls/20201219004151-dataset-input-up.sql:/docker-entrypoint-initdb.d/20201219004151-dataset-input-up.sql
+    networks: 
+      - backend
 
   adminer:
+    container_name: adminer
     image: adminer
     restart: always
     ports:
       - 8080:8080
+    networks: 
+      - backend
+
+  app:
+    container_name: app
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    links:
+      - postgres
+    depends_on: 
+      - postgres
+    env_file: 
+      - docker.env
+    networks: 
+      - backend
+
+networks: 
+  backend:
