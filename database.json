@@ -1,0 +1,11 @@
+{
+    "defaultEnv": "local",
+    "local": {
+      "host": { "ENV" : "LOCAL_HOST" },
+      "database": { "ENV" : "LOCAL_DATABASE" },
+      "user": { "ENV" : "LOCAL_DB_USER" },
+      "password" : { "ENV" : "LOCAL_DB_PASS" },
+      "driver": "postgres",
+      "multipleStatements": true
+    }
+}
