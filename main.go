@@ -22,7 +22,10 @@ func main() {
 	config.LoadConfig()
 
 	//connection string
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.C.GetString("db.host"), config.C.GetInt64("db.port"), config.C.GetString("db.user"), config.C.GetString("db.pwd"), config.C.GetString("db.dbname"))
+
+	psqlconn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", config.C.GetString("db.user"), config.C.GetString("db.pwd"), config.C.GetString("db.host"), config.C.GetString("db.dbname"))
+
+	fmt.Println(psqlconn)
 
 	var repository internal.Repository
 	retry.ForeverSleep(10*time.Second, func(_ int) (err error) {
@@ -46,14 +49,6 @@ func main() {
 		panic(err)
 	}
 	elapsed1 := time.Since(start)
-
-	// sanitized, err := s.CountSanitizedData()
-	// if err != nil {
-	// 	log.Println("s.CountSanitizedData(): %w", err)
-	// 	panic(err)
-	// }
-
-	// reliability := (float64(sanitized) / float64(total)) * float64(100)
 
 	log.Printf("took %.2f seconds to process data", elapsed1.Seconds())
 	log.Println("process done, bye")
